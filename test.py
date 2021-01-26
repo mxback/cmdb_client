@@ -22,19 +22,14 @@ rds = redis.Redis(host='192.168.205.130', port=6379, db=14)
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     while True:
-        # client_data = {}
+        client_data = []
         client = CmdbClient()
-        client_data = client.get_cpu['used']
-        # client_data['memory'] = client.get_memory
-        # client_data['disk'] = client.get_disk
-        # client_data['start_time'] = client.get_start_time
-        # client_data['hostname'] = client.get_hostname
+        client_data.append(client.get_cpu['used'])
         ip_address = client.get_ip_address
-        # client_data['ip_address'] = ip_address
-        # client_data['send_time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # client_data['system'] = client.get_system
+        client_data.append(datetime.datetime.now().strftime("%H:%M:%S"))
         client_data = json.dumps(client_data)
         print(client_data)
-        rds.lpush(ip_address + "cpu:used", client_data)
+        if rds.llen(ip_address) >= 60:
+            rds.rpop(ip_address)
+        rds.lpush(ip_address, client_data)
         time.sleep(10)
-
