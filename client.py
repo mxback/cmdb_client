@@ -18,7 +18,7 @@ class CmdbClient(object):
     @property
     def get_cpu(self):
         self.cpu_data['count'] = str(psutil.cpu_count())
-        self.cpu_data['used'] = str(psutil.cpu_percent(1)) + "%"
+        self.cpu_data['used'] = str(psutil.cpu_percent(1))
         return self.cpu_data
 
     @property
