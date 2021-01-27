@@ -2,6 +2,8 @@ import socket
 import psutil
 import datetime
 import platform
+import json
+import time
 from psutil import net_if_addrs
 import uuid
 
@@ -18,7 +20,7 @@ class CmdbClient(object):
     @property
     def get_cpu(self):
         self.cpu_data['count'] = str(psutil.cpu_count())
-        self.cpu_data['used'] = str(psutil.cpu_percent(1))
+        self.cpu_data['usage'] = str(psutil.cpu_percent(1))
         return self.cpu_data
 
     @property
@@ -26,6 +28,8 @@ class CmdbClient(object):
         self.mem_data['total'] = str(int(psutil.virtual_memory().total / 1024 / 1024 / 1024))
         self.mem_data['used'] = str(int(psutil.virtual_memory().used / 1024 / 1024 / 1024))
         self.mem_data['free'] = str(int(psutil.virtual_memory().free / 1024 / 1024 / 1024))
+        self.mem_data['usage'] = str(int(psutil.virtual_memory().used / 1024 / 1024 / 1024 * 100) // int(
+            psutil.virtual_memory().total / 1024 / 1024 / 1024))
         return self.mem_data
 
     @property
@@ -39,10 +43,13 @@ class CmdbClient(object):
                 self.disk_data[name]['total'] = str(int(o.total / (1024.0 * 1024.0 * 1024.0)))
                 self.disk_data[name]['used'] = str(int(o.used / (1024 * 1024 * 1024)))
                 self.disk_data[name]['free'] = str(int(o.free / (1024 * 1024 * 1024)))
+                self.disk_data[name]['usage'] = str(
+                    int(o.used / (1024 * 1024 * 1024) * 100) // int(o.total / (1024.0 * 1024.0 * 1024.0)))
             except PermissionError:
                 self.disk_data[name]['total'] = None
                 self.disk_data[name]['used'] = None
                 self.disk_data[name]['free'] = None
+                self.disk_data[name]['usage'] = None
         return self.disk_data
 
     @property
@@ -50,11 +57,9 @@ class CmdbClient(object):
         self.start_time = str(datetime.datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S"))
         return self.start_time
 
-
     @property
     def get_hostname(self):
         return socket.gethostname()
-
 
     @property
     def get_ip_address(self):
@@ -66,10 +71,10 @@ class CmdbClient(object):
             soc.close()
         return self.ip
 
-
     @property
     def get_system(self):
         return platform.system()
+
 
 """
     # 获取mac地址
@@ -84,3 +89,19 @@ class CmdbClient(object):
             if "-" in address and len(address) == 17:
                 print(address)
 """
+
+
+class Monitor(object):
+    def __init__(self, rds, client):
+        self.rds = rds
+        self.client = client
+        self.client_data = []
+        self.key = client.get_ip_address
+
+    def push_used(self):
+        self.client_data.append(self.client.get_cpu['used'])
+        self.client_data.append(datetime.datetime.now().strftime("%H:%M:%S"))
+        client_data = json.dumps(self.client_data)
+        if self.rds.llen(self.key) >= 60:
+            self.rds.rpop(self.key)
+        self.rds.lpush(self.key, client_data)
