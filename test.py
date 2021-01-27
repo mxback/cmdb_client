@@ -13,9 +13,8 @@
 # # print(io)
 
 from client import CmdbClient, Monitor
-import datetime, time
+import time
 import redis
-import json
 
 rds = redis.Redis(host='192.168.205.130', port=6379, db=14)
 # Press the green button in the gutter to run the script.
