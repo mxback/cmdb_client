@@ -3,7 +3,7 @@ import psutil
 import datetime
 import platform
 import json
-import time
+
 from psutil import net_if_addrs
 import uuid
 
@@ -96,12 +96,14 @@ class Monitor(object):
         self.rds = rds
         self.client = client
         self.client_data = []
-        self.key = client.get_ip_address
 
-    def push_used(self):
-        self.client_data.append(self.client.get_cpu['used'])
+    @property
+    def push_usage(self):
+        self.client_data.append(self.client.get_cpu['usage'])
+        self.client_data.append(self.client.get_memory['usage'])
         self.client_data.append(datetime.datetime.now().strftime("%H:%M:%S"))
         client_data = json.dumps(self.client_data)
-        if self.rds.llen(self.key) >= 60:
-            self.rds.rpop(self.key)
-        self.rds.lpush(self.key, client_data)
+        if self.rds.llen(self.client.get_ip_address) >= 60:
+            self.rds.rpop(self.client.get_ip_address)
+        self.rds.lpush(self.client.get_ip_address, client_data)
+        print(client_data)
