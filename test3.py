@@ -29,9 +29,9 @@ class HostUsageInfo(object):
 
     @classmethod
     def get_usage_data(cls, rds, key):
-        column, cpu_usage_data, memory_usage_data = cls().host_usage_data(rds, key)
-        return column, cpu_usage_data, memory_usage_data
+        columns, cpu_usage_data, memory_usage_data = cls().host_usage_data(rds, key)
+        return list(reversed(columns)), list(reversed(cpu_usage_data)), list(reversed(memory_usage_data))
 
 
-a, b, c = HostUsageInfo().get_usage_data(rds, key)
+a, b, c = HostUsageInfo.get_usage_data(rds, key)
 print(a, b, c)

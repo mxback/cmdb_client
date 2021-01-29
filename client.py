@@ -106,4 +106,4 @@ class Monitor(object):
         if self.rds.llen(self.client.get_ip_address) >= 60:
             self.rds.rpop(self.client.get_ip_address)
         self.rds.lpush(self.client.get_ip_address, client_data)
-        print(client_data)
+        return client_data

@@ -9,6 +9,7 @@ rds = redis.Redis(host='192.168.205.130', port=6379, db=13)
 if __name__ == '__main__':
     while True:
         client_data = {}
+        # 实例化,__init__
         client = CmdbClient()
         client_data['cpu'] = client.get_cpu
         client_data['memory'] = client.get_memory
