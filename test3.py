@@ -8,5 +8,30 @@ keys = rds.keys()
 # print(rds.keys())
 key = "192.168.15.140"
 
-if key.encode() in keys:
-    print('a')
+
+# if key.encode() in keys:
+#     print('a')
+
+
+class HostUsageInfo(object):
+
+    def __init__(self):
+        self.columns = []
+        self.cpu_usage_data = []
+        self.memory_usage_data = []
+
+    def host_usage_data(self, rds, key):
+        for i in range(rds.llen(key)):
+            self.columns.append(json.loads(rds.lrange(key, i, i)[0].decode())[2])
+            self.cpu_usage_data.append(json.loads(rds.lrange(key, i, i)[0].decode())[0])
+            self.memory_usage_data.append(json.loads(rds.lrange(key, i, i)[0].decode())[1])
+        return self.columns, self.cpu_usage_data, self.memory_usage_data
+
+    @classmethod
+    def get_usage_data(cls, rds, key):
+        column, cpu_usage_data, memory_usage_data = cls().host_usage_data(rds, key)
+        return column, cpu_usage_data, memory_usage_data
+
+
+a, b, c = HostUsageInfo().get_usage_data(rds, key)
+print(a, b, c)
